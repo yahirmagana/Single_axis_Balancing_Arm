@@ -41,7 +41,7 @@ void setup() {
   esc.attach(ESC_PIN, 1000, 2000); 
   esc.writeMicroseconds(1000); 
 
-  delay(5000); // 5 solid seconds of zero-throttle to arm it                 
+  delay(5000);                 
   Serial.println("ESC Armed successfully.");
 
   // ---------------------------------------------------------
@@ -86,7 +86,7 @@ void loop() {
   if (abs(error) < 5.0) {
       integral += error * dt;
   } else {
-    integral = 0; // Reset it if we are far away so it doesn't "wind up"
+    integral = 0;
   }
   integral = constrain(integral, -50, 50); // Tighter constraint
   
@@ -97,6 +97,7 @@ void loop() {
 
   output = (Kp * error) + (Ki * integral) + (Kd * d_filtered);
   output = constrain(output, -120, 120);
+  
   // ---------------------------------------------------------
   // 5. MOTOR OUTPUT
   // ---------------------------------------------------------
@@ -114,6 +115,7 @@ void loop() {
   Serial.print(motor_pwm);
   Serial.println("*/");          // End of frame
 }
+
 // --- Helper Functions ---
 
 void initIMU() {
@@ -133,8 +135,6 @@ void readIMU() {
     int16_t raw_accel_x = Wire.read() << 8 | Wire.read();
     int16_t raw_accel_y = Wire.read() << 8 | Wire.read();
     int16_t raw_accel_z = Wire.read() << 8 | Wire.read();
-    
-    //Wire.read(); Wire.read(); // Skip temperature
     
     int16_t raw_gyro_x = Wire.read() << 8 | Wire.read();
     int16_t raw_gyro_y = Wire.read() << 8 | Wire.read();
