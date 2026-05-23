@@ -9,14 +9,14 @@
 float roll_offset = 0.0; 
 
 // --- PID Constants ---
-float Kp = 0.039; 
-float Ki = 0.04;
-float Kd = 0.16;
+float Kp = 0.2; 
+float Ki = 0.2405;
+float Kd = 0.28;
 
 // --- System Variables ---
 float setpoint = 0.0; 
 float roll_angle = 0.0;
-float base_throttle = 1247; 
+float base_throttle = 1253; 
 
 // --- PID Variables ---
 float error, last_error, integral, derivative, d_filtered, output;
@@ -41,7 +41,7 @@ void setup() {
   esc.attach(ESC_PIN, 1000, 2000); 
   esc.writeMicroseconds(1000); 
 
-  delay(5000);                 
+  delay(5000); // 5 solid seconds of zero-throttle to arm it                 
   Serial.println("ESC Armed successfully.");
 
   // ---------------------------------------------------------
@@ -72,9 +72,7 @@ void loop() {
   // If the arm flips too far, kill the motor
   if (roll_angle > 50) {
     esc.writeMicroseconds(1000);
-    Serial.print("/*");
-    Serial.println("Angle limit exceeded");
-    Serial.println("*/");
+    Serial.println("CRITICAL: Angle limit exceeded! Motor killed.");
     while(1); 
   }
   
@@ -83,10 +81,10 @@ void loop() {
   // ---------------------------------------------------------
   error = setpoint - roll_angle;
   
-  if (abs(error) < 5.0) {
+  if (abs(error) < 30.0) {
       integral += error * dt;
   } else {
-    integral = 0;
+    integral = 0; // Reset it if we are far away so it doesn't "wind up"
   }
   integral = constrain(integral, -50, 50); // Tighter constraint
   
@@ -106,14 +104,13 @@ void loop() {
   
   esc.writeMicroseconds(motor_pwm);
 
-  // TELEMETRY FOR SERIAL STUDIO
-  // Format: /*Setpoint,Roll,Output*/
-  Serial.print("/*");           // Start of frame
+  // CLEAN TELEMETRY FOR PYTHON LOGGING
+  // Format: ArduinoMillis,Setpoint,RollAngle,PIDOutput,MotorPWM
+  Serial.print(millis());      Serial.print(",");
   Serial.print(setpoint);      Serial.print(",");
   Serial.print(roll_angle);    Serial.print(",");
   Serial.print(output);        Serial.print(",");
-  Serial.print(motor_pwm);
-  Serial.println("*/");          // End of frame
+  Serial.println(motor_pwm);
 }
 
 // --- Helper Functions ---
